@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<style>
+	#box{width: 800px;height: 800px;background: black;position: relative;float: left;}
+	#ball{width: 400px;height: 400px;background-image: url(ball.png);background-position: center; position: absolute;border-radius: 50%;left: 22%;top: 25%;animation:ball 100s infinite ;}
+	#pathway{width: 450px;height: 450px;border: 2px solid #333; position: relative;top: 21.5%;left: 18.5%;border-radius: 50%;}
+	#circle{width: 25px;height: 25px;position: absolute;left:220px;top:-32px;border-radius: 50%;display: none;}
+	#circle img{width: 60px;height: 60px;transform:rotate(0deg);}
+	#loadingBag{width: 100px;height: 22px;position: absolute;left: -100px;top: 22px;color: white;background: red;;}
+	#loading{width: 100px;height: 20px;left: -85px;top: 22px;color: white;background: green;border: 1px solid yellow;}
+	/*.loadingConsume{animation:loadingConsume 10s infinite linear;}
+	.loadingAdd{animation:loadingAdd 10s infinite linear;}*/
+	/*.circleStart{width: 60px;height: 60px;transform:rotate(0deg);animation:rotate 8s infinite linear;}*/
+	
+	 
+
+	@keyframes rotate{
+	0%{ -webkit-transform:rotate(0deg);}
+	100%{-webkit-transform:rotate(360deg);}
+	}
+	@keyframes ball{
+	0%{ -webkit-transform:rotate(0deg);}
+	100%{-webkit-transform:rotate(-360deg);}
+	}
+	.pathway{
+	 animation:rotate 10s infinite linear;
+	}
+	.shipStop{animation:rotate 0s infinite  linear;}
+
+	/*@keyframes loadingConsume
+	{
+	0%   {background:green;width: 80px;}
+	50%  {background:yellow;width: 40px;}
+	100% {background:red;width: 0px;}
+	}
+	@keyframes loadingAdd
+	{
+	0%   {background:red;width: 10px;}
+	50%  {background:yellow;width: 40px;}
+	100% {background:green;width: 80px;}
+	}*/
+	#control{padding: 25px;background: #f0f0f0;width: 400px;display: inline-block;height: 600px;}
+	#control input{margin: 0 10px;width: 80px;height: 50px;}
+
+	#log{width: 400px;height: 500px;border: 2px solid #222;background: #333;margin-top: 22px;}
+	#logTitle{height: 30px;background: #222;color: white;line-height: 30px;padding: 5px;}
+	#logContent{width: 100%;padding: 10px;height: 442px;overflow:scroll;color: #f0f0f0;}
+	</style>
+</head>
+<body>
+<div id="box">
+	<div id="pathway">
+		<div id="circle">
+			<img src="ship.png" id="spaceShip" alt="">
+			<div id="loadingBag">
+				<div id="loading"></div>
+			</div>
+		</div>
+	</div>
+	<div id="ball"></div>
+</div>
+<div id="control">
+<h2>东莞指挥部</h2>
+	对飞船下达指令：
+	<hr>
+	<br>
+	<input type="button" value="进入轨道" id="inPathway"><input type="button" value="开始" id="start"><input type="button" value="停止" id="stop"><input type="button" value="销毁" id="delete">
+	<br>
+	<br>
+	<hr>
+	<span>每次指令点击发送会有1秒钟延迟<br>
+	发送的成功率为30%
+	</span>
+	<div id="log">
+		<div id="logTitle">
+			日志
+		</div>
+		<div id="logContent">
+			
+		</div>
+	</div>
+	
+</div>
+<script>
+var inPathway=document.getElementById('inPathway');
+var startBtn=document.getElementById('start');
+var stopBtn=document.getElementById('stop');
+var deleteBtn=document.getElementById('delete');
+var pathway=document.getElementById('pathway');
+var circle=document.getElementById('circle');
+var spaceShip=document.getElementById('spaceShip');
+var loading=document.getElementById('loading');
+var loadingConsume=document.getElementsByClassName('loadingConsume');
+var logContent=document.getElementById('logContent');
+
+/*宇宙飞船系统*/
+	var obj={
+		//飞行系统
+		fly:{
+			//进入轨道方法
+			inPathways:function(){
+				circle.style.display="block";
+				//发送成功后提示信息
+				log.mediator.MediatorSucc();
+			},
+			//开始方法
+			start:function(){
+				//发送成功后提示信息
+				log.mediator.MediatorSucc();
+				pathway.style.animationPlayState="running";
+				loading.style.animationPlayState="running";
+				spaceShip.style.transform="rotate(60deg)";
+				pathway.className="pathway";
+				spaceShip.className="circleStart";
+				//执行动力消耗系统
+				obj.power.powerConsume();	
+			},
+			//停止方法
+			stop:function(){
+				//发送成功后提示信息
+				log.mediator.MediatorSucc();
+				//清除进度条消耗定时器
+				clearTimeout(timerConsume);
+				// loading.className="loadingAdd";
+				spaceShip.style.transform="rotate(0deg)";
+				obj.power.powerAdd();
+				pathway.style.animationPlayState="paused";
+				spaceShip.className="";	
+			},
+			//摧毁方法
+			destroy:function(){
+				//发送成功后提示信息
+				log.mediator.MediatorSucc();
+				log.order.logDestroy();
+				circle.style.display="none";
+			}
+		},
+		//能源系统
+		power:{
+			//能源计数器
+			 powerIndex:100,
+			 //动力消耗系统，每秒消耗5%动力
+			 powerConsume:function(){
+				if (obj.power.powerIndex==0){
+					spaceShip.style.transform="rotate(0deg)";
+					clearTimeout(timerConsume);
+					//动画暂停
+					pathway.style.animationPlayState="paused";
+					obj.power.powerAdd();
+				}else{
+					pathway.style.animationPlayState="running";
+					loading.innerText=obj.power.powerIndex+"%";
+					loading.style.width=obj.power.powerIndex+"px";
+					obj.power.powerIndex=obj.power.powerIndex-1;
+					timerConsume=setTimeout(obj.power.powerConsume,100);
+					}
+			},
+			//能源增加系统,每秒增加5%太阳能
+			powerAdd:function(){
+				if(obj.power.powerIndex==100){
+					clearTimeout(timerAdd);
+					//取消动画暂停
+					loading.style.animationPlayState="running"
+					// loading.className="loadingConsume";
+					spaceShip.style.transform="rotate(60deg)";
+					obj.power.powerConsume();	
+				}
+				else{
+					//进度条增长
+					loading.className="loadingAdd";
+					loading.innerText=obj.power.powerIndex+"%";
+					loading.style.width=obj.power.powerIndex+"px";
+					obj.power.powerIndex=obj.power.powerIndex+1;
+					timerAdd=setTimeout(obj.power.powerAdd,100);
+				}
+			}
+		},
+		//中转系统
+		control:{
+			ready:function(){
+				//模拟30%的丢包率
+				//>70%的发送成功率
+				if(Math.random()>0.7){
+				log.order.logReady();
+				//延迟1s后执行
+				setTimeout(obj.fly.inPathways,1000);
+				}else{
+					log.order.logReady();
+					//发送成功后更新日志
+					setTimeout(function(){
+					//30%丢包率
+					log.mediator.MediatorFail()},1000);	
+				}
+			},
+			run:function(){
+				log.order.logFly();
+				//延迟1s后执行
+				setTimeout(obj.fly.start,1000);
+			},
+			end:function(){
+				log.order.logStop();
+				//延迟1s后执行
+				setTimeout(obj.fly.stop,1000);
+			},
+			destroy:function(){
+				log.order.logDestroy();
+				//延迟1s后执行
+				setTimeout(obj.fly.destroy,1000);
+			}
+
+		},
+		
+	}
+/*日志系统*/
+	var log={
+		//日志指挥部指令
+		order:{
+			logReady:function(){
+				var ready=logContent.innerHTML=logContent.innerHTML+"<p>东莞总部控制中心: 发送命令：发射航天飞机，进入轨道</p>";
+				// return logReady;
+			},
+			 logFly:function(){
+				var fly=logContent.innerHTML=logContent.innerHTML+"<p>东莞总部控制中心: 发送命令，航天飞机开始飞行</p>";
+				// return fly;
+			},
+			 logStop:function(){
+				var stop=logContent.innerHTML=logContent.innerHTML+"<p>东莞总部控制中心: 发送命令，航天飞机停止飞行</p>";
+				// return stop;
+			},
+			 logDestroy:function(){
+				var destroy=logContent.innerHTML=logContent.innerHTML+"<p>东莞总部控制中心: 发送命令，摧毁航天飞机</p>";
+				// return destroy;
+			}
+		},
+		//日志中转器指令
+		mediator:{
+			 MediatorFail:function(){
+				logContent.innerHTML=logContent.innerHTML+"<p>Mediator: 命令传输失败，已丢包</p>"
+			},
+			 MediatorSucc:function(){
+				logContent.innerHTML=logContent.innerHTML+"<p>Mediator: 命令传输成功</p>"
+			}
+		}
+	}
+/*指挥部*/
+	//点击进入轨道
+	inPathway.onclick=obj.control.ready;
+	//点击开始
+	startBtn.onclick=obj.control.run;
+	//点击暂停
+	stopBtn.onclick=obj.control.end;
+	//点击销毁
+	deleteBtn.onclick=obj.control.destroy;
+</script>
+</body>
+</html>
